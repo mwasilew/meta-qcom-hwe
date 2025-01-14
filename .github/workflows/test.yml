@@ -30,12 +30,13 @@ jobs:
           J=$(jq -cn --argjson jobfiles "$JOBFILES" '{target: $jobfiles}')
           echo "jobmatrix=$J" >> $GITHUB_OUTPUT
           echo "Preparing testjob files"
+          echo "$J"
 
   submit-job:
     needs: prepare-job-list
     runs-on: ubuntu-latest
     strategy:
-      matrix: ${{ fromJson(needs.retrieve-job-list.outputs.jobmatrix) }}
+      matrix: ${{ fromJson(needs.prepare-job-list.outputs.jobmatrix) }}
     steps:
       - name: Clone repository
         uses: actions/checkout@v4
@@ -46,13 +47,15 @@ jobs:
         run: |
           TARGET=${{ matrix.target }}
           FIND_PATH="${TARGET#*/}"
-          DEVICE_TYPE="${FIND_PATH%/*}"
+          DEVICE_TYPE_PATH="${FIND_PATH%/*}"
+          DEVICE_TYPE="${DEVICE_TYPE_PATH#*/}"
           BUILD_FILE_NAME="core-image-base-${DEVICE_TYPE}.rootfs.qcomflash.tar.gz"
           BUILD_DOWNLOAD_URL="${{inputs.url}}/${DEVICE_TYPE}/${BUILD_FILE_NAME}"
           sed -i "s|{{DEVICE_TYPE}}|${DEVICE_TYPE}|g" "${{ matrix.target }}"
           sed -i "s|{{GITHUB_SHA}}|${GITHUB_SHA}|g" "${{ matrix.target }}"
           sed -i "s|{{BUILD_DOWNLOAD_URL}}|${BUILD_DOWNLOAD_URL}|g" "${{ matrix.target }}"
           sed -i "s|{{BUILD_FILE_NAME}}|${BUILD_FILE_NAME}|g" "${{ matrix.target }}"
+          sed -i "s|{{GITHUB_RUN_ID}}|${GITHUB_RUN_ID}|g" "${{ matrix.target }}"
           cat "${{ matrix.target }}"
 
       - name: Submit ${{ matrix.target }}
