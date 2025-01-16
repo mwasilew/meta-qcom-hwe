@@ -141,4 +141,10 @@ jobs:
         id: print-output
         run: |
           echo "Downloads URL: https://quic-yocto-fileserver-1029608027416.us-central1.run.app/${GITHUB_RUN_ID}/"
-          echo "url=\"https://quic-yocto-fileserver-1029608027416.us-central1.run.app/${GITHUB_RUN_ID}/\"" >> $GITHUB_OUTPUT
+          echo "url=\"${BASE_ARTIFACT_URL}\"" >> $GITHUB_OUTPUT
+          echo "${BASE_ARTIFACT_URL}" > build_url
+      - name: Upload build URL
+        uses: actions/upload-artifact@v4
+        with:
+          name: build_url
+          path: build_url
